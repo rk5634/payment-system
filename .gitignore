@@ -1,0 +1,77 @@
+# Binaries
+/build/
+/bin/
+*.exe
+*.out
+*.dll
+*.so
+*.dylib
+
+# Go build artifacts
+*.test
+
+# Vendor directory (if using vendoring, adjust based on preference)
+vendor/
+
+# Dependency directories
+Gopkg.lock
+Gopkg.toml
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Local environment config
+.env
+.env.*
+*.local
+*.development
+*.production
+
+# Configs (optional: if you want to avoid committing local override configs)
+configs/app.development.yaml
+configs/app.local.yaml
+
+# Docker artifacts
+docker-compose.override.yml
+
+# Generated proto files (if generated outside the internal/api or similar)
+*.pb.go
+
+# Coverage reports
+coverage.out
+
+# Temporary files
+*.tmp
+*.temp
+
+# Database artifacts (if generated locally)
+*.db
+
+# Test output
+/test-results/
+
+# Node / frontend stuff if any frontend part exists in future
+node_modules/
+
+# Makefile intermediate files
+*.d
+
+# Ignore secrets or credentials if mistakenly placed
+secrets.yaml
+*.key
+*.pem
+*.crt
+
+# Notes directory
+notes/

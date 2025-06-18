@@ -1,0 +1,16 @@
+# .air.toml
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/main ./cmd/paymentservice"
+  bin = "tmp/main"
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "vendor", "notes"]
+  exclude_file = []
+  follow_symlink = true
+  delay = 1000
+  poll = true
+
+[log]
+  time = true

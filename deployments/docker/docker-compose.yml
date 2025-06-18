@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  payment:
+    profiles:
+      - prod
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../../.env
+    depends_on:
+      - db
+      - redis
+      - kafka
+
+  payment-dev:
+    profiles:
+      - dev
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.dev
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../../.env
+    volumes:
+      - ../..:/app
+    depends_on:
+      - db
+      - redis
+      - kafka
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-payments}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: bitnami/kafka:latest
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+volumes:
+  pgdata:
