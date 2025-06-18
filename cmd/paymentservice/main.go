@@ -26,7 +26,7 @@ func main() {
 	// Routes
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok",
-			"message": "Hi main - Payment service is running"})
+			"message": "Hi prod - Payment service is running"})
 	})
 
 	// Start server
