@@ -1,3 +1,5 @@
+include .env
+
 # Build production image
 build:
 	docker build -t payment:latest -f deployments/docker/Dockerfile .
@@ -30,3 +32,13 @@ clean-compose:
 # Stop and clean up docker-compose for dev profile
 clean-compose-dev:
 	docker-compose -f deployments/docker/docker-compose.yml --profile dev down -v
+
+
+# connect to the database
+connect-db:
+	docker exec -it $(C) psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+
+
+# connect to the Redis instance
+connect-redis:
+	docker exec -it $(C) redis-cli -a $(REDIS_PASSWORD)

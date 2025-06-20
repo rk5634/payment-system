@@ -6,9 +6,21 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rk5634/payment-system/internal/config"
+	"github.com/rk5634/payment-system/internal/util"
 )
 
 func main() {
+
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
+	}
+
+	config.LoadConfig(env)
+	util.InitLogger(config.AppConfig.Log.Level)
+
+	util.Logger.Info("Starting Payment System")
 	// Get port from environment or default to 8080
 	port := os.Getenv("PORT")
 	if port == "" {

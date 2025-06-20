@@ -75,3 +75,9 @@ secrets.yaml
 
 # Notes directory
 notes/
+
+# Configuration files
+configs/
+
+# Ignore specific configuration files
+redis.conf

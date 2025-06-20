@@ -1,0 +1,15 @@
+server:
+  http_port: 8080
+  grpc_port: 9090
+
+database:
+  postgres_dsn: "host=localhost port=5432 user=payment_user password=payment_pass dbname=payment_db sslmode=disable"
+  redis_addr: "localhost:6379"
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  payment_topic: "payment-events"
+
+log:
+  level: "info"
