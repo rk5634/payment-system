@@ -29,8 +29,8 @@ services:
       - ../..:/app
     depends_on:
       - db
-      # - redis
-      # - kafka
+      - redis
+      - kafka
 
   db:
     image: postgres:15
@@ -68,24 +68,31 @@ services:
       retries: 5
 
 
-  # zookeeper:
-  #   image: bitnami/zookeeper:latest
-  #   ports:
-  #     - "2181:2181"
-
   kafka:
     image: bitnami/kafka:latest
-  
-    env_file:
-      - ../../.env
+    restart: always
     environment:
-      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
-      ALLOW_PLAINTEXT_LISTENER: "yes"
+      - KAFKA_CFG_NODE_ID=${KAFKA_NODE_ID}
+      - KAFKA_CFG_PROCESS_ROLES=${KAFKA_PROCESS_ROLES}
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=${KAFKA_CONTROLLER_LISTENER_NAMES}
+      - KAFKA_CFG_LISTENERS=${KAFKA_LISTENERS}
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=${KAFKA_INTER_BROKER_LISTENER_NAME}
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+      - ALLOW_PLAINTEXT_LISTENER=no   # Disable plaintext in prod
+      # Optional TLS/SSL settings can go here
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@localhost:9093
+    volumes:
+      - kafka_data:/bitnami/kafka
     ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
+      - "9092:9092"  # Adjust or restrict to internal network in prod
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   pgdata:
   redis_data:
+  kafka_data:
