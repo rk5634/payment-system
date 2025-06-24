@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -15,8 +15,10 @@ type Config struct {
 	}
 
 	Database struct {
-		PostgresDSN string
-		RedisAddr   string
+		PostgresDSN    string
+		RedisAddr      string
+		PostgresPassword string
+		RedisPassword    string
 	}
 
 	Kafka struct {
@@ -32,26 +34,39 @@ type Config struct {
 var AppConfig *Config
 
 func LoadConfig(env string) {
+	// Load .env file (optional)
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, skipping...")
+	}
+
 	v := viper.New()
 
-	// Set defaults
+	// Set base config
 	v.SetConfigName("app")
 	v.SetConfigType("yaml")
 	v.AddConfigPath("./configs")
+
+	// Automatically override with env vars
 	v.AutomaticEnv()
 
-	// Load base config
+	// Load base YAML config
 	if err := v.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading base config: %v", err)
 	}
 
-	// Merge environment-specific overrides
+	// Merge env-specific YAML
 	if env != "" {
 		v.SetConfigName(fmt.Sprintf("app.%s", env))
-		v.MergeInConfig() // Merge overrides
+		if err := v.MergeInConfig(); err != nil {
+			log.Fatalf("Error reading %s config: %v", env, err)
+		}
 	}
 
-	// Unmarshal to struct
+	// Bind specific env vars that don't directly map
+	v.BindEnv("database.postgrespassword", "POSTGRES_PASSWORD")
+	v.BindEnv("database.redispassword", "REDIS_PASSWORD")
+
+	// Unmarshal into Config struct
 	var c Config
 	if err := v.Unmarshal(&c); err != nil {
 		log.Fatalf("Unable to decode config: %v", err)
