@@ -1,4 +1,3 @@
-
 services:
   payment:
     profiles:
@@ -14,6 +13,9 @@ services:
       - db
       - redis
       - kafka
+      - migrate   # Ensure migrations run before app starts
+    networks:
+      - app-network
 
   payment-dev:
     profiles:
@@ -29,18 +31,31 @@ services:
       - ../..:/app
     depends_on:
       - db
-      - redis
-      - kafka
+      # - redis
+      # - kafka
+      - migrate
+    networks:
+      - app-network
+
+  migrate:
+    image: migrate/migrate:v4.16.2
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../:/app
+    working_dir: /app
+    entrypoint: ["/bin/sh", "-c", "sh /app/scripts/setup_db.sh"]
+    networks:
+      - app-network
 
   db:
     image: postgres:15
     restart: always
     env_file:
       - ../../.env
-    # environment:
-    #   - POSTGRES_DB
-    #   - POSTGRES_USER
-    #   - POSTGRES_PASSWORD
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -48,51 +63,59 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-
-
-  redis:
-    image: bitnami/redis:latest
-    restart: always
     ports:
-      - "6379:6379"  # Remove or restrict in production
-    volumes:
-      - ../../redis.conf:/opt/bitnami/redis/mounted-etc/redis.conf
-      - redis_data:/bitnami/redis/data
-    env_file:
-      - ../../.env
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+      - "5432:5432"
+    networks:
+      - app-network
 
+#   redis:
+#     image: bitnami/redis:latest
+#     restart: always
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - ../../redis.conf:/opt/bitnami/redis/mounted-etc/redis.conf
+#       - redis_data:/bitnami/redis/data
+#     env_file:
+#       - ../../.env
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+#       interval: 5s
+#       timeout: 3s
+#       retries: 5
+#     networks:
+#       - app-network
 
-  kafka:
-    image: bitnami/kafka:latest
-    restart: always
-    environment:
-      - KAFKA_CFG_NODE_ID=${KAFKA_NODE_ID}
-      - KAFKA_CFG_PROCESS_ROLES=${KAFKA_PROCESS_ROLES}
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=${KAFKA_CONTROLLER_LISTENER_NAMES}
-      - KAFKA_CFG_LISTENERS=${KAFKA_LISTENERS}
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
-      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=${KAFKA_INTER_BROKER_LISTENER_NAME}
-      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
-      - ALLOW_PLAINTEXT_LISTENER=no   # Disable plaintext in prod
-      # Optional TLS/SSL settings can go here
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@localhost:9093
-    volumes:
-      - kafka_data:/bitnami/kafka
-    ports:
-      - "9092:9092"  # Adjust or restrict to internal network in prod
-    healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+#   kafka:
+#     image: bitnami/kafka:latest
+#     restart: always
+#     environment:
+#       - KAFKA_CFG_NODE_ID=${KAFKA_NODE_ID}
+#       - KAFKA_CFG_PROCESS_ROLES=${KAFKA_PROCESS_ROLES}
+#       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=${KAFKA_CONTROLLER_LISTENER_NAMES}
+#       - KAFKA_CFG_LISTENERS=${KAFKA_LISTENERS}
+#       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+#       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=${KAFKA_INTER_BROKER_LISTENER_NAME}
+#       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+#       - ALLOW_PLAINTEXT_LISTENER=no
+#       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@localhost:9093
+#     volumes:
+#       - kafka_data:/bitnami/kafka
+#     ports:
+#       - "9092:9092"
+#     healthcheck:
+#       test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 5
+#     networks:
+#       - app-network
 
 volumes:
   pgdata:
-  redis_data:
-  kafka_data:
+#   redis_data:
+#   kafka_data:
+
+networks:
+  app-network:
+    driver: bridge

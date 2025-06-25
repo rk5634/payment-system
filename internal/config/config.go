@@ -15,10 +15,15 @@ type Config struct {
 	}
 
 	Database struct {
-		PostgresDSN    string
-		RedisAddr      string
-		PostgresPassword string
-		RedisPassword    string
+		PostgresHost     string // Changed from PostgresDSN
+		PostgresPort     string // Added
+		PostgresUser     string // Added
+		PostgresDBName   string // Added
+		PostgresSSLMode  string // Added
+		PostgresPassword string // Existing
+
+		RedisAddr     string
+		RedisPassword string
 	}
 
 	Kafka struct {
@@ -48,6 +53,7 @@ func LoadConfig(env string) {
 
 	// Automatically override with env vars
 	v.AutomaticEnv()
+	v.SetEnvPrefix("APP") // Prefix for environment variables, e.g., APP_DATABASE_POSTGRESHOST
 
 	// Load base YAML config
 	if err := v.ReadInConfig(); err != nil {
@@ -62,9 +68,10 @@ func LoadConfig(env string) {
 		}
 	}
 
-	// Bind specific env vars that don't directly map
-	v.BindEnv("database.postgrespassword", "POSTGRES_PASSWORD")
-	v.BindEnv("database.redispassword", "REDIS_PASSWORD")
+	// Bind specific env vars that don't directly map (or for common prefixes)
+	// Example: APP_DATABASE_POSTGRES_PASSWORD
+	v.BindEnv("database.postgrespassword", "POSTGRES_PASSWORD") // Keep this for direct env var compatibility
+	v.BindEnv("database.redispassword", "REDIS_PASSWORD")       // Keep this for direct env var compatibility
 
 	// Unmarshal into Config struct
 	var c Config

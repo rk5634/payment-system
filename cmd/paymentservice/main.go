@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rk5634/payment-system/internal/config"
 	"github.com/rk5634/payment-system/internal/util"
+	"github.com/rk5634/payment-system/internal/database/postgres"
 )
 
 func main() {
@@ -19,6 +20,32 @@ func main() {
 
 	config.LoadConfig(env)
 	util.InitLogger(config.AppConfig.Log.Level)
+
+	// Get database configuration
+	dbCfg := postgres.Config{
+		Host:     config.AppConfig.Database.PostgresHost,
+		Port:     config.AppConfig.Database.PostgresPort,
+		User:     config.AppConfig.Database.PostgresUser,
+		Password: config.AppConfig.Database.PostgresPassword,
+		DBName:   config.AppConfig.Database.PostgresDBName,
+		SSLMode:  config.AppConfig.Database.PostgresSSLMode,
+	}
+
+	// Initialize PostgreSQL connection
+	log.Println("Connecting to PostgreSQL database...")
+	db, err := postgres.NewDB(dbCfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize PostgreSQL database: %v", err)
+	}
+	defer db.Close() // Ensure the database connection is closed when main exits
+
+	// Now 'db.Pool' can be passed to other parts of application,
+	// such as repositories and services.
+	log.Println("Payment service started successfully!")
+
+
+
+
 
 	util.Logger.Info("Starting Payment System")
 	// Get port from environment or default to 8080

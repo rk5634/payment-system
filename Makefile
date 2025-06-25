@@ -36,9 +36,13 @@ clean-compose-dev:
 
 # connect to the database
 connect-db:
-	docker exec -it $(C) psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+	docker exec -it $(c) psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
 
 
 # connect to the Redis instance
 connect-redis:
-	docker exec -it $(C) redis-cli -a $(REDIS_PASSWORD)
+	docker exec -it $(c) redis-cli -a $(REDIS_PASSWORD)
+
+# open the application in the vscode
+openauth:
+	code D:\Projects\GO\auth-system

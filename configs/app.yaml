@@ -4,6 +4,11 @@ server:
 
 database:
   postgres_dsn: "host=localhost port=5432 user=payment_user password=payment_pass dbname=payment_db sslmode=disable"
+  postgresHost: db
+  postgresPort: 5432
+  postgresUser: payment_user
+  postgresDBName: payment_db
+  postgresSSLMode: disable
   redis_addr: "localhost:6379"
 
 kafka:
