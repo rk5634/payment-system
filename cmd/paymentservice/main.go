@@ -2,27 +2,31 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/rk5634/payment-system/internal/api"
 	"github.com/rk5634/payment-system/internal/config"
+	dbpostgres "github.com/rk5634/payment-system/internal/database/postgres"
+	repopostgres "github.com/rk5634/payment-system/internal/repository/postgres"
+	"github.com/rk5634/payment-system/internal/service"
 	"github.com/rk5634/payment-system/internal/util"
-	"github.com/rk5634/payment-system/internal/database/postgres"
 )
 
 func main() {
-
+	// Load environment
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "development"
 	}
 
+	// Load config
 	config.LoadConfig(env)
 	util.InitLogger(config.AppConfig.Log.Level)
 
-	// Get database configuration
-	dbCfg := postgres.Config{
+	// PostgreSQL configuration
+	dbCfg := dbpostgres.Config{
 		Host:     config.AppConfig.Database.PostgresHost,
 		Port:     config.AppConfig.Database.PostgresPort,
 		User:     config.AppConfig.Database.PostgresUser,
@@ -31,46 +35,37 @@ func main() {
 		SSLMode:  config.AppConfig.Database.PostgresSSLMode,
 	}
 
-	// Initialize PostgreSQL connection
+	// Initialize DB connection
 	log.Println("Connecting to PostgreSQL database...")
-	db, err := postgres.NewDB(dbCfg)
+	db, err := dbpostgres.NewDB(dbCfg)
 	if err != nil {
-		log.Fatalf("Failed to initialize PostgreSQL database: %v", err)
+		log.Fatalf("❌ Failed to initialize PostgreSQL database: %v", err)
 	}
-	defer db.Close() // Ensure the database connection is closed when main exits
+	defer db.Close()
+	log.Println("✅ Connected to PostgreSQL!")
 
-	// Now 'db.Pool' can be passed to other parts of application,
-	// such as repositories and services.
-	log.Println("Payment service started successfully!")
+	// Setup repository & service
+	paymentRepo := repopostgres.NewPaymentRepository(db.Pool)
+	paymentService := service.NewService(paymentRepo)
 
+	// Setup Gin
+	// gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(gin.Recovery(), gin.Logger())
 
+	// Register all routes (v1 API + health check)
+	log.Println("Registering routes...")
+	api.RegisterRoutes(router, paymentService)
 
-
-
-	util.Logger.Info("Starting Payment System")
-	// Get port from environment or default to 8080
+	// Start HTTP server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	// Set Gin to release mode for production-like logs
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
-
-	// Middleware: recovery (panic handler), logging
-	router.Use(gin.Recovery())
-	router.Use(gin.Logger())
-
-	// Routes
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok",
-			"message": "Hi dev - Payment service is running"})
-	})
-
-	// Start server
 	log.Printf("🚀 Starting payment service on port %s", port)
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("❌ Failed to start server: %v", err)
 	}
+	log.Println("✅ Payment service is running!")
+	log.Println("Visit http://localhost:" + port + "/health to check service status")
 }

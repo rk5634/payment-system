@@ -81,3 +81,6 @@ configs/
 
 # Ignore specific configuration files
 redis.conf
+
+# Ignore Makefile
+Makefile
